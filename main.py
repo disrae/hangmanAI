@@ -1,6 +1,8 @@
 import string
 import csv
 
+# TODO: augment chars found to track position
+
 
 def initWords():
     with open('words.csv') as f:
@@ -11,17 +13,13 @@ def initWords():
 
 
 def containsCharsFoundSoFar(word: str) -> bool:
-    doesContainAllChars = all(char in word for char in charsFound)
+    doesContainAllChars = all(char in word for char in charactersFound)
     return doesContainAllChars
 
 
-def wordIsRightLength(word: str) -> bool:
-    return len(word) == length
-
-
 def renderProgress() -> None:
-    for char in wordToGuess:
-        if char in charsGuessed:
+    for char in charactersFound:
+        if char:
             print(char, ' ', end='')
         else:
             print('_ ', end='')
@@ -29,22 +27,14 @@ def renderProgress() -> None:
 
 
 def getMaxChar(counts: dict) -> str:
-    for char in charsGuessed:
-        del counts[char]
-    v = list(counts.values())
-    k = list(counts.keys())
-    return k[v.index(max(v))]
+    inverse = [(value, key) for key, value in counts.items()]
+    return max(inverse)[1]
 
 
-def makeGuess() -> str:
-    ''' 
-        count frequency of characters in possible 
-        words, -> return max probability character
-    '''
-    # new dictionary of alphabet
-    charCount = dict.fromkeys(string.ascii_lowercase, 0)
-    # iterate all words: checking length matches and chars contained
-    for word in listOfWords:
+def populateFreqCount(charCount: dict):
+    # iterate over all words: checking length matches and chars contained
+    print('helllooo?')
+    for word in possibleWords:
         if wordIsRightLength(word) and containsCharsFoundSoFar(word):
             for char in word:
                 char = char.lower()
@@ -52,36 +42,82 @@ def makeGuess() -> str:
                     charCount[char] += 1
                 except:
                     pass
-    char = getMaxChar(charCount)
-    print('guessed ', char)
-    charsGuessed.append(char)
-    return char
 
 
-def verifyGuess(c: str):
-    numFound = wordToGuess.count(c)
+def makeGuess() -> str:
+    ''' 
+        count frequency of characters in possible 
+        words, -> return max probability character
+    '''
+    # init new dictionary of alphabet freq count
+    charCount = dict.fromkeys(string.ascii_lowercase, 0)
+    populateFreqCount(charCount)
+    guess = getMaxChar(charCount)
+    print('guessed ', guess)
+    charactersGuessed[guess] = guess
+    return guess
+
+
+def verifyGuess(guess: str):
+    numFound = wordToFind.count(guess)
+    print(numFound)
     # if no match decrement tries
     if numFound == 0:
         global triesRemaining
         triesRemaining -= 1
     else:
-        charsFound.append(c)
+        for i, char in enumerate(wordToFind):
+            if wordToFind[i] == guess:
+                print('found at pos', i, 'character:', char)
+                charactersFound[i] = guess
+                numFound += 1
+    print(triesRemaining)
 
 
-# CONSTANTS/GLOBALS
-triesRemaining = 5
-listOfWords = initWords()
-charsGuessed = []
-charsFound = []
+def identifyPositions():
+    '''
+    inputs: wordToFind, englishDictionary, charsFound
+    purpose: find words in dict with charsFound in same positions; count alphabet freq; ret max char
+    output: dict of positions and char
+    '''
 
-# main
-wordToGuess = input('input word for hangman: ')
-length = len(wordToGuess)
 
-while triesRemaining > 0:
-    char = makeGuess()
-    verifyGuess(char)
+# Main
+triesRemaining = 6
+# Members.
+possibleWords = initWords()
+wordToFind = input('input word for hangman: ')
+charactersGuessed = {}
+charactersFound = [None] * len(wordToFind)
+numFound = 0
+
+# Filter possibleWords.
+while (triesRemaining > 0):
+    for i, currentWord in enumerate(possibleWords):
+        lengthsDontMatch = len(currentWord) != len(wordToFind)
+        charsFoundDontMatch = False
+        for position, character in charactersGuessed.items():
+            print(currentWord[position], '!=', character)
+            if currentWord[position] != character:
+                charsFoundDontMatch = True
+
+        if lengthsDontMatch or charsFoundDontMatch:
+            print('del words')
+            del possibleWords[i]
+
+    # Count highest frequency character.
+    characterFrequencies = {}
+    for word in possibleWords:
+        for char in word:
+            char = char.lower()
+            try:
+                characterFrequencies[char] += 1
+            except:
+                characterFrequencies[char] = 1
+    guess = getMaxChar(characterFrequencies)
+    print('the guess is:', guess)
+    verifyGuess(guess)
     renderProgress()
-    if len(set(wordToGuess)) == len(charsFound):
+    if len(set(wordToFind)) == numFound:
         print('ᕙ(⇀‸↼‶)ᕗ *~~* WINNER *~~* ᕙ(⇀‸↼‶)ᕗ\n')
         break

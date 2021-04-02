@@ -1,0 +1,25 @@
+It's surpirsingly hard to understand my code. 
+Naming should have been way more explicit.
+
+Algorithm:
+    wordToFind: string;
+    wordSoFar: string[]; # Array of characters in correct position of wordToGuess.
+    possibleWords: [string[]]; # ListOfWords array containing remaining possible words.
+    charactersFound: { positionNumber: characterString }
+    
+    1. If length(possibleWord) != length(wordToFind):
+        remove from ListOfWords
+    2. If ( ListOfWords[i][charsFoundPositionNumber] != charactersFound[positionNumber])
+        remove from ListOfWords
+    3. Count frequency of chars, guess maxFrequency char.
+    
+
+while triesRemaining > 0:
+
+    char = makeGuess()
+    verifyGuess(char)
+
+    renderProgress()
+    if len(set(wordToGuess)) == len(charactersFound):
+        print('ᕙ(⇀‸↼‶)ᕗ *~~* WINNER *~~* ᕙ(⇀‸↼‶)ᕗ\n')
+        break
